@@ -22,6 +22,10 @@ pipeline {
             steps {
               git(url: 'https://github.com/baiyinnamula/gulimall-learning.git', credentialsId: $GITHUB_CREDENTIAL_ID, branch: 'master', changelog: true, poll: false)
               sh 'echo 正在构建项目： $PROJECT_NAME， 版本号：$PROJECT_VERSION'
+              sh "echo 正在完整编译项目"
+              container ('maven') {
+                sh "mvn clean install -Dmaven.test.skip=true"
+              }
           }
         }
         stage('sonarqube analysis') {
@@ -29,6 +33,7 @@ pipeline {
                 container ('maven') {
                     withCredentials([string(credentialsId: "$SONAR_CREDENTIAL_ID", variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('sonar') {
+                            sh "echo 当前目录 `pwd`"
                             sh "mvn sonar:sonar -o -gs `pwd`/mvn-settings.xml -Dsonar.branch=$BRANCH_NAME -Dsonar.login=$SONAR_TOKEN"
                         }
                     }
